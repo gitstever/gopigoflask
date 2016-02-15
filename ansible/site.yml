@@ -1,0 +1,8 @@
+---
+- name: install gopigoflask
+  hosts: gopigoflask
+  become: yes
+  become_user: root
+  roles:
+    - gopigoflask
+

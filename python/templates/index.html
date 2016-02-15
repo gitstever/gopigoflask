@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script>
+function httpGetAsync(theUrl, callback)
+{
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function() { 
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+            callback(xmlHttp.responseText);
+    }
+    xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+    xmlHttp.send(null);
+}
+
+
+var request = new XMLHttpRequest();
+request.onreadystatechange = function() {
+    if (request.readyState === 4) {
+        if (request.status === 200) {
+            document.body.className = 'ok';
+            console.log(request.responseText);
+        } else {
+            document.body.className = 'error';
+        }
+    }
+};
+
+function piCommand(command){
+    request.open("GET", command);
+    request.send(null);
+}
+
+//request.open("GET", url , true);
+//request.send(null);
+</script>
+<title>GoPiGo Rest Interface</title>
+</head>
+<body>
+<table border="1">
+<tr>
+    <td><div id="leftledon" onclick='piCommand("/command/leftled_on");'>LEFT-LED ON</td>
+    <td><div id="leftledon" onclick='piCommand("/command/leftled_off");'>LEFT-LED OFF</td>
+    <td><div id="forward" onclick='piCommand("/command/forward");'>FORWARD</div></td>
+    <td><div id="rightledoff" onclick='piCommand("/command/rightled_off");'>RIGHT-LED ON</td>
+    <td><div id="leftledon" onclick='piCommand("/command/rightled_on");'>RIGHT-LED ON</td>
+</tr>
+<tr>
+    <td><div id="left_rotate" onclick='piCommand("/command/left_rot");'>LEFT ROTATE</div></td>
+    <td><div id="left" onclick='piCommand("/command/left");'>LEFT</div></td>
+    <td><div id="stop" onclick='piCommand("/command/stop");'>STOP</div></td>
+    <td><div id="right" onclick='piCommand("/command/right");'>RIGHT</div></td>
+    <td><div id="right" onclick='piCommand("/command/right_rot");'>RIGHT ROTATE</div></td>
+</tr>
+<tr>
+    <td></td>
+    <td></td>
+    <td><div id="back" onclick='piCommand("/command/back");'>BACK</div></td>
+    <td></td>
+    <td></td>
+</tr>
+</table>
+</body>
+</html>
+

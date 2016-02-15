@@ -1,0 +1,71 @@
+---
+- name: apt-get 
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - apache2
+    - libapache2-mod-wsgi
+    - git
+- name: usermod -G i2c www-data
+  user:
+    name: www-data
+    group: www-data
+    groups: i2c
+- name: stat /root/Desktop/GoPiGo
+  stat:
+    path: "{{ ansible_user_dir }}/Desktop/GoPiGo"
+  register: gopigo_exists
+  changed_when: no
+- name: git clone https://github.com/DexterInd/GoPiGo.git
+  git:
+    repo: https://github.com/DexterInd/GoPiGo.git
+    dest: "{{ ansible_user_dir }}/Desktop/GoPiGo"
+    force: yes
+  when: not gopigo_exists.stat.exists
+- name: run ~/Desktop/GoPiGo/Setup/install.sh
+  command: "{{ ansible_user_dir }}/Desktop/GoPiGo/Setup/install.sh"
+  args:
+    chdir: "{{ ansible_user_dir }}/Desktop/GoPiGo/Setup"
+  when: not gopigo_exists.stat.exists
+- name: mkdir /var/www/gopigoflask
+  file:
+    name: /var/www/gopigoflask/templates
+    state: directory
+    recurse: yes
+    owner: root
+    group: root
+    mode: 0755
+- name: create /etc/apache2/sites-available/gopigoflask.conf
+  copy:
+    src: gopigoflask.conf
+    dest: /etc/apache2/sites-available/gopigoflask.conf
+    owner: root
+    group: root
+    mode: 0644
+- name: ln -s /etc/apache2/sites-available/gopigoflask.conf /etc/apache2/sites-enabled/gopigoflask.conf
+  file:
+    src: /etc/apache2/sites-available/gopigoflask.conf
+    dest: /etc/apache2/sites-enabled/gopigoflask.conf
+    state: link
+- name: create /var/www/gopigoflask/gopigoflask.py /var/www/gopigoflask/gopigoflask.wsgi
+  copy:
+    src: "{{ item }}"
+    dest: /var/www/gopigoflask/{{ item }}
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - gopigoflask.py
+    - gopigoflask.wsgi
+- name: create /var/www/gopigoflask/templates/index.html
+  copy:
+    src: index.html
+    dest: /var/www/gopigoflask/templates/index.html
+    owner: root
+    group: root
+    mode: 0644
+- name: service apache2 restart
+  service:
+    name: apache2
+    state: restarted
+
