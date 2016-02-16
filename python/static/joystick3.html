@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pi Robot</title>
+
+    <link rel="stylesheet" href="jquery-ui.css">
+    <script src="jquery-1.10.2.js"></script>
+    <script src="jquery-ui.min.js"></script>
+
+    <style type="text/css">
+        .joystick {
+            position: relative;
+            width: 230px;
+            height: 230px;
+            -webkit-border-radius: 100%;
+            -moz-border-radius: 100%;
+            border-radius: 100%;
+            /*background-color: #eee;*/
+        }
+        .joystick .inner_circle {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            -webkit-border-radius: 100%;
+            -moz-border-radius: 100%;
+            border-radius: 100%;
+            background-color: #ccc;
+        }
+        .joystick .handle {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background-color: rgb(201, 44, 44);
+            border: 1px solid rgb(107, 35, 35);
+            border-radius: 5px;
+        }
+
+    </style>
+
+    <link href="style.css" rel="stylesheet">
+    <link href="modal.css" rel="stylesheet">
+
+    <script src="jquery.js"></script>
+    <script src="jquery-ui.js"></script>
+    <script src="jquery.joystick.js"></script>
+    <script src="gopigoflask.js"></script>
+
+    <script>
+        function layoutControls() {
+
+            var motorStick = $('#motor_stick');
+            console.log( screen.width + " " + screen.height );
+
+            if ( screen.width > screen.height )
+            {
+                // In landscape mode
+                motorStick.css( 'left', 0.5*screen.width - motorStick.width()/2 );
+                motorStick.css( 'top', 0.5*screen.height - motorStick.height()/2 );
+            }
+            else
+            {
+                // In portrait mode
+                motorStick.css( 'left', 0.2*screen.width - motorStick.width()/2 );
+                motorStick.css( 'top', 0.7*screen.height - motorStick.height()/2 );
+            }
+        }
+
+        $( window ).on( "orientationchange", function() {
+            setTimeout( layoutControls, 300 ); } );
+
+        $(document).ready(function() {
+             $('#motor_stick').joystick({
+                 xSnap: true,
+                 ySnap: true,
+                 moveEvent: function(pos) {
+                     $("#joystick_value").html("Joystick " + pos.x + " " + pos.y);
+                     if (pos.x != 0 || pos.y != 0){
+                         if (Math.abs(pos.x) > Math.abs(pos.y)){
+                             if (pos.x > 0){
+                                 gopigo.right();
+                             } else {
+                                 gopigo.left()
+                             }
+                         } else {
+                             if (pos.y > 0){
+                                 gopigo.fwd();
+                             } else {
+                                 gopigo.bwd();
+                             }
+                         }
+                     } else {
+                         gopigo.stop();
+                     }
+                     console.log( "Move " + pos.x + " " + pos.y );
+                 },
+                 endEvent: function(pos) {
+                     console.log( "Move " + pos.x + " " + pos.y );
+                 },
+                 //updateIntervalMS: 500,
+                 updateEvent: function(pos) {
+                     $("#joystick_value").html("Joystick " + pos.x + " " + pos.y);
+                     console.log( "Move " + pos.x + " " + pos.y );
+                 },
+             });
+             $( "#left_slider").slider( {
+                 min: 0,
+                 max: 255,
+                 orientation: "vertical",
+                 slide: function( event, ui) {
+                     $( "#speed_slider_value" ).html( ui.value );
+                     $.get( "../command/speed?speed=" + ui.value, function( data ) {
+                         $("#speed_slider_value").html( data.left + " " + data.right );
+                         $("#right_slider").slider('value', data.right);
+                         $("#speed_slider").slider('value', Math.floor((data.left + data.right)/2));
+                     });
+
+                 },
+             } );
+
+             $( "#speed_slider").slider( {
+                 min: 0,
+                 max: 255,
+                 orientation: "vertical",
+                 slide: function( event, ui) {
+                     $( "#speed_slider_value" ).html( ui.value );
+                     $.get( "../command/speed?speed=" + ui.value, function( data ) {
+                         $("#speed_slider_value").html( data.left + " " + data.right );
+                         $("#right_slider").slider('value', data.right);
+                         $("#left_slider").slider('value', data.left);
+                     });
+                 },
+             } );
+             $( "#right_slider").slider( {
+                 min: 0,
+                 max: 255,
+                 orientation: "vertical",
+                 slide: function( event, ui) {
+                     $( "#speed_slider_value" ).html( ui.value );
+                      $.get( "../command/speed?right_speed=" + ui.value, function( data ) {
+                         $("#speed_slider_value").html( data.left + " " + data.right );
+                         $("#left_slider").slider('value', data.left);
+                         $("#speed_slider").slider('value', Math.floor((data.left + data.right)/2));
+                     });
+
+                     console.log("slider " + ui.value);
+                     gopigo.speed(null, null, ui.value);
+                 },
+             } );
+             $('#motor_stick').joystick( 'value', 0.0, 0.0 );
+            layoutControls();
+            $.get( "../command/speed", function( data ) {
+                $("#speed_slider_value").html( data.left + " " + data.right );
+                $("#right_slider").slider('value', data.right);
+                $("#left_slider").slider('value', data.left);
+                $("#speed_slider").slider('value', Math.floor((data.left + data.right)/2));
+                console.log(data);
+            });
+        });
+    </script>
+
+  </head>
+
+  <body>
+    <p><img id="camera" src=""/></p>
+    <table><tr>
+    <td><div id="left_slider"></div></td>
+    <td><div id="speed_slider"></div></td>
+    <td><div id="right_slider"></div></td>
+    </tr></table>
+    <div id="speed_slider_value">begin</div>
+    <div id="joystick_value"></div>
+    <div class="joystick" id="motor_stick">
+      <div class="inner_circle"></div>
+      <div class="handle"></div>
+    </div>
+  </body>
+</html>
+
