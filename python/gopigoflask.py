@@ -59,6 +59,34 @@ def do_command(command=None):
         speed_result = gopigo.read_motor_speed()
         logging.debug(speed_result)
         return flask.json.jsonify({'speed':speed_result,'right':speed_result[0],'left':speed_result[1]})
+    elif command == "get_data":
+        speed_result = gopigo.read_motor_speed()
+        enc_right = gopigo.enc_read(0)
+        enc_left = gopigo.enc_read(1)
+        volt = gopigo.volt()
+        timeout = gopigo.read_timeout_status()
+        return flask.json.jsonify(
+            {'speed':speed_result,
+            'speed_right':speed_result[0],
+            'speed_left':speed_result[1],
+            'enc_right':enc_right,
+            'enc_left':enc_left,
+            'volt':volt,
+            'timeout':timeout,
+            'fw_ver':gopigo.fw_ver(),
+        })
+    elif command in ["enc_tgt","step"]:
+        tgt = flask.request.args.get("tgt")
+        direction = flask.request.args.get("dir")
+        if tgt:
+            gopigo.gopigo.enc_tgt(1, 1, int(tgt))
+            if dir:
+                if dir == "bwd":
+                    gopigo.bwd()
+                else:
+                    gopigo.fwd()
+            else:
+                gopigo.fwd()
     return ""
 
 if __name__ == "__main__":
